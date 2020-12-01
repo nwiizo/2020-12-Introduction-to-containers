@@ -40,7 +40,7 @@ curl 127.0.0.1:8080
 ```
 
 ## 課題
-* [v2](./v2) 用の main,go 及びいくつかのファイルを用意しました。Dockerfile の変更を行いこちら対応お願いします。
+* main.go という名前が気に入らなかったので [v2](./v2) にserver.go というファイルを生成しました。 Dockerfile の変更を行いwebweb というイメージ名でv2 のタグをつけて buildの実行をお願いします。
 
 # Kubernetesのハンズオン
 ## [Kind](https://kind.sigs.k8s.io/) によるclusterの作成
