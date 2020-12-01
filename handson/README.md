@@ -79,7 +79,7 @@ $ kubectl create deployment webweb-preview --image webweb:v1 --kubeconfig=kubeco
 # svc の作成
 $ kubectl expose --type ClusterIP --port 8080 deployment webweb-preview --kubeconfig=kubeconfig.yaml
 # アクセスの為に`kubectl` にプロキシをしてもらいます
-$ kubectl kubectl port-forward svc/webweb-preview 8080:8080 --kubeconfig=kubeconfig.yaml
+$ kubectl port-forward svc/webweb-preview 8080:8080 --kubeconfig=kubeconfig.yaml
 # 確認
 $ curl 127.0.0.1:8080
 ```
@@ -91,7 +91,7 @@ $ kubectl apply -f deployment.yaml --kubeconfig=kubeconfig.yaml
 # svc の作成
 $ kubectl apply -f service.yaml --kubeconfig=kubeconfig.yaml
 # アクセスの為に`kubectl` にプロキシをしてもらいます
-$ kubectl kubectl port-forward svc/webweb-preview02 8080:8080 --kubeconfig=kubeconfig.yaml
+$ kubectl port-forward svc/webweb-preview02 8080:8080 --kubeconfig=kubeconfig.yaml
 # 確認
 $ curl 127.0.0.1:8080
 ```
