@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webweb-preview02
+  labels:
+    app: webweb
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: webweb
+  template:
+    metadata:
+      labels:
+        app: webweb
+    spec:
+      containers:
+      - name: webweb-preview
+        image: webweb:v1
+        ports:
+        - containerPort: 8080
+

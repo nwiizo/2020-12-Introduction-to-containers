@@ -2,13 +2,13 @@
 下記は自分の検証環境で入っているversionなので特にこだわりなく入れてもらって大丈夫だと思います。
 
 * git
-* docker 18.09.7
-* kubectl 1.16.3
-* Golang 1.14.1
-* Kind v0.8.1
+* docker 19.03.7
+* kubectl 1.18.0
+* Golang 1.15.2
+* Kind v0.9.0
 
 
-# Docker の検証
+# Docker のハンズオン
 [Docerの各種コマンド](https://docs.docker.com/engine/reference/commandline/docker/)は一度読んでおくとよいかもしれません。
 ``` sh
 $ docker -v
@@ -26,55 +26,75 @@ Hello from Docker!
 ブラウザで確認後 Docker の削除をお願いします。
 ``` sh
 $ docker pull docker.io/nginx
-$ docker run -d -p 8000:80 --name nginx-latest docker.io/nginx:latest
-$ wget 127.0.0.1:8000
+$ docker run -d -p 8080:80 --name nginx-latest docker.io/nginx:latest
+$ curl 127.0.0.1:8080
 ```
 ## golang の[main.go](./main.go) を[DockerFile](./Dockerfile)でのデプロイ
-こちら、[main.go](./main.go) になります。
-```
-package main
-
-import (
-  "fmt"
-  "net/http"
-  "os"
-)
-
-func main(){
-  http.HandleFunc("/", handler)
-  http.ListenAndServe(":8080", nil)
-}
-
-func handler(w http.ResponseWriter, r *http.Request){
-  msg := os.Getenv("ENENENVVV")
-  fmt.Fprintf(w, msg)
-}
-```
-こちら、[DockerFile](./Dockerfile)になります。
-```
-FROM golang:latest AS builder
-
-WORKDIR /work
-COPY main.go .
-RUN go build -o web .
-
-FROM alpine
-
-WORKDIR /exec
-COPY --from=builder /work/web .
-EXPOSE 8080
-CMD ["./web"]
-```
-準備ができましたらbuildの実行をお願いします
+* こちら、[main.go](./main.go) になります。
+* こちら、[DockerFile](./Dockerfile)になります。
+* 準備ができましたらwebweb というイメージ名でv1 のタグをつけて buildの実行をお願いします。
 ``` sh
 docker build -t webweb:v1 .
-
+docker run -p 8080:8080 --name 2020-12-Introduction-to-containers webweb:v1
+curl 127.0.0.1:8080
 ```
-Load
 
-kind load docker-image webweb:v1
+## 課題
+* [v2](./v2) 用の main,go 及びいくつかのファイルを用意しました。Dockerfile の変更を行いこちら対応お願いします。
 
+# Kubernetesのハンズオン
+## [Kind](https://kind.sigs.k8s.io/) によるclusterの作成
+``` sh
+$ kind create cluster --name introduction-to-containers
+# kubeconfig の書き込み
+$ kind get kubeconfig --name introduction-to-containers > kubeconfig.yaml
+# kubeconfing の確認
+$ kubectl version  --kubeconfig=kubeconfig.yaml
+```
+## Nginx リソースの作成
+``` sh
+# deployment の作成
+$ kubectl create deployment nginx-preview --image nginx:latest --kubeconfig=kubeconfig.yaml
+deployment.apps/nginx-preview created
+# deplyment の確認
+$ kubectl get deployment nginx-preview --kubeconfig=kubeconfig.yaml
+NAME            READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-preview   1/1     1            1           69s
+# accessの為のサービス作成
+$ kubectl expose --type ClusterIP --port 80 deployment nginx-preview
+service/nginx-preview exposed
+# アクセスの為に`kubectl` にプロキシをしてもらいます
+$ kubectl port-forward svc/nginx-preview 8080:80
+# 確認
+$ curl 127.0.0.1:8080
+```
+検証ではよく [Telepresence](https://www.telepresence.io/discussion/overview) を用いますが今回は利用するツールを最小化する為に排除
 
-# install [myapp](https://kind.sigs.k8s.io/docs/user/quick-start/#loading-an-image-into-your-cluster)
+## webweb:v1 を[install](https://kind.sigs.k8s.io/docs/user/quick-start/#loading-an-image-into-your-cluster) して実行してみる
+``` sh 
+# Image の Load を行います
+$ kind load docker-image webweb:v1  --name introduction-to-containers
+# deployment の作成
+$ kubectl create deployment webweb-preview --image webweb:v1 --kubeconfig=kubeconfig.yaml
+# svc の作成
+$ kubectl expose --type ClusterIP --port 8080 deployment webweb-preview --kubeconfig=kubeconfig.yaml
+# アクセスの為に`kubectl` にプロキシをしてもらいます
+$ kubectl kubectl port-forward svc/webweb-preview 8080:8080 --kubeconfig=kubeconfig.yaml
+# 確認
+$ curl 127.0.0.1:8080
+```
 
-KindにはローカルのDockerイメージを読み込む機能が存在している。この章では自分で構築したアプリをコンテナ化して実際にデプ
+## Manifest によるデプロイ
+``` sh
+# deployment の作成
+$ kubectl apply -f deployment.yaml --kubeconfig=kubeconfig.yaml
+# svc の作成
+$ kubectl apply -f service.yaml --kubeconfig=kubeconfig.yaml
+# アクセスの為に`kubectl` にプロキシをしてもらいます
+$ kubectl kubectl port-forward svc/webweb-preview02 8080:8080 --kubeconfig=kubeconfig.yaml
+# 確認
+$ curl 127.0.0.1:8080
+```
+
+## 課題
+* [webweb:v2](./v2) をclusterで実行してaccessしてみてください
